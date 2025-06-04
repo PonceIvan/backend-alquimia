@@ -91,13 +91,12 @@ public partial class AlquimiaDbContext : IdentityDbContext<User, Role, int>
     {
         base.OnModelCreating(modelBuilder); // ✅ SIEMPRE antes de todo
 
-        base.OnModelCreating(modelBuilder);
 
 
 
         modelBuilder.Entity<ProductVariant>(entity =>
         {
-            entity.ToTable("ProductVariants");
+            entity.ToTable("ProductVariant");
         });
 
         modelBuilder.Entity<User>(entity =>

@@ -21,3 +21,5 @@ alquimia.Services/bin/*
 
 Tests/obj/*
 Tests/bin/*
+/.idea/workspace.xml
+.idea/

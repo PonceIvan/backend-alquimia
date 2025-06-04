@@ -1,9 +1,8 @@
 ﻿//using backendAlquimia.alquimia.Data;
-using alquimia.Data.Data.Entities;
 using alquimia.Services.Services;
+using alquimia.Services.Services.Interfaces;
 using alquimia.Services.Services.Models;
 using backendAlquimia.alquimia.Services.Interfaces;
-using backendAlquimia.alquimia.Services.Services;
 using backendAlquimia.Models;
 using Microsoft.AspNetCore.Mvc;
 using Note = alquimia.Data.Data.Entities.Note;
@@ -17,11 +16,13 @@ namespace backendAlquimia.Controllers
     {
         private readonly INoteService _notaService;
         private readonly IFormulaService _formulaService;
+        private readonly IOlfactoryFamilyService _olfactoryFamilyService;
 
-        public CreatorController(INoteService notaService, IFormulaService formulaService)
+        public CreatorController(INoteService notaService, IFormulaService formulaService, IOlfactoryFamilyService olfactoryFamilyService)
         {
             _notaService = notaService;
             _formulaService = formulaService;
+            _olfactoryFamilyService = olfactoryFamilyService;
         }
 
         [HttpGet("create")]
@@ -99,30 +100,23 @@ namespace backendAlquimia.Controllers
         [HttpGet("get-formula/{id}")]
         public async Task<IActionResult> GetFormulaById(int id)
         {
-            try
-            {
-                var formula = await _formulaService.GetFormulaByIdAsync(id);
-                if (formula == null)
-                    return NotFound();
+            var formula = await _formulaService.GetFormulaByIdAsync(id);
+            return Ok(formula);
 
-                return Ok(formula);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                return StatusCode(500, "Internal server error");
-            }
         }
 
         [HttpGet("note-info/{id}")]
         public async Task<IActionResult> GetNoteInfo(int id)
         {
             var note = await _notaService.GetNoteInfoAsync(id);
-            if (note == null)
-            {
-                return NotFound();
-            }
             return Ok(note);
+        }
+
+        [HttpGet("family-info/{id}")]
+        public async Task<IActionResult> GetOlfactoryFamilyInfo(int id)
+        {
+            var family = await _olfactoryFamilyService.GetOlfactoryFamilyInfoAsync(id);
+            return Ok(family);
         }
     }
 }
