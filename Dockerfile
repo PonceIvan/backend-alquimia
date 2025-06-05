@@ -1,12 +1,23 @@
 # Etapa 1: Build
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /src
+WORKDIR /app
+
+# Copiar todo el contenido del repo
 COPY . .
-RUN dotnet restore Alquimia.API/Alquimia.API.csproj
-RUN dotnet publish Alquimia.API/Alquimia.API.csproj -c Release -o /app/publish
+
+# Ir a la carpeta del proyecto
+WORKDIR /app/Alquimia.API
+
+# Restaurar dependencias
+RUN dotnet restore
+
+# Publicar la app
+RUN dotnet publish -c Release -o /publish
 
 # Etapa 2: Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
-COPY --from=build /app/publish .
+
+COPY --from=build /publish .
+
 ENTRYPOINT ["dotnet", "Alquimia.API.dll"]
