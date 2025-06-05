@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - rama-develop-pre-presentacion
 
 jobs:
   build-and-deploy:
