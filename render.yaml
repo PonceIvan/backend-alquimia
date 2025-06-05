@@ -1,7 +1,7 @@
 services:
   - type: web
     name: alquimia-api
-    env: dotnet
+    runtime: dotnet
     plan: free
     branch: rama-develop-pre-presentacion
     buildCommand: dotnet build Alquimia.API/Alquimia.API.csproj
