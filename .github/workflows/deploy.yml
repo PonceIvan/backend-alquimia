@@ -41,5 +41,12 @@ jobs:
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: ./publish
 
-      - name: Trigger Render deploy hook
-        run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
+      - name: Trigger Render deploy hook (safe fallback)
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.RENDER_DEPLOY_HOOK }}" ]; then
+            echo "Triggering Render deploy hook..."
+            curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
+          else
+            echo "RENDER_DEPLOY_HOOK is not set. Skipping Render deploy step."
+          fi
