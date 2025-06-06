@@ -12,46 +12,56 @@ public class MercadoLibreController : ControllerBase
         _httpClient = httpClientFactory.CreateClient();
     }
 
-    [HttpGet("buscar")]
-    public async Task<IActionResult> Buscar([FromQuery] string q)
+[HttpGet("buscar")]
+public async Task<IActionResult> Buscar([FromQuery] string q)
+{
+    if (string.IsNullOrWhiteSpace(q))
+        return BadRequest("Falta el parámetro de búsqueda (q)");
+
+    var url = $"https://api.mercadolibre.com/sites/MLA/search?q={Uri.EscapeDataString(q)}";
+
+    // Token fijo para reintento (en producción deberías refrescarlo dinámicamente)
+    var token = "APP_USR-1739781403101478-060613-4be2db98018c875853b7c845da8acf89-412861077";
+
+    try
     {
-        if (string.IsNullOrWhiteSpace(q))
-            return BadRequest("Falta el parámetro de búsqueda (q)");
+        // Intento sin token
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.UserAgent.ParseAdd("Mozilla/5.0");
 
-        var baseUrl = $"https://api.mercadolibre.com/sites/MLA/search?q={Uri.EscapeDataString(q)}";
+        var response = await _httpClient.SendAsync(request);
 
-        try
+        if (response.IsSuccessStatusCode)
+            return Content(await response.Content.ReadAsStringAsync(), "application/json");
+
+        // Reintento con token
+        var retry = new HttpRequestMessage(HttpMethod.Get, url);
+        retry.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        retry.Headers.UserAgent.ParseAdd("Mozilla/5.0");
+
+        var retryResponse = await _httpClient.SendAsync(retry);
+
+        var responseContent = await retryResponse.Content.ReadAsStringAsync();
+
+        if (!retryResponse.IsSuccessStatusCode)
         {
-            // 1. Intento sin token
-            var request = new HttpRequestMessage(HttpMethod.Get, baseUrl);
-            request.Headers.UserAgent.ParseAdd("Mozilla/5.0"); // para evitar bloqueo
-
-            var response = await _httpClient.SendAsync(request);
-
-            if (response.IsSuccessStatusCode)
+            return StatusCode((int)retryResponse.StatusCode, new
             {
-                var content = await response.Content.ReadAsStringAsync();
-                return Content(content, "application/json");
-            }
-
-            // 2. Si falló (403, 401...), reintento con token
-            var token = "APP_USR-1739781403101478-060613-4be2db98018c875853b7c845da8acf89-412861077";
-
-            var retryRequest = new HttpRequestMessage(HttpMethod.Get, baseUrl);
-            retryRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            retryRequest.Headers.UserAgent.ParseAdd("Mozilla/5.0");
-
-            var retryResponse = await _httpClient.SendAsync(retryRequest);
-
-            if (!retryResponse.IsSuccessStatusCode)
-                return StatusCode((int)retryResponse.StatusCode, await retryResponse.Content.ReadAsStringAsync());
-
-            var retryContent = await retryResponse.Content.ReadAsStringAsync();
-            return Content(retryContent, "application/json");
+                status = (int)retryResponse.StatusCode,
+                error = $"Error con token: {responseContent}"
+            });
         }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Error en la API: {ex.Message}");
-        }
+
+        return Content(responseContent, "application/json");
     }
+    catch (Exception ex)
+    {
+        return StatusCode(500, new
+        {
+            status = 500,
+            error = $"Excepción: {ex.Message}"
+        });
+    }
+}
+
 }
